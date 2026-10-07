@@ -68,7 +68,50 @@ const questions=[
 ['Which tag creates one item inside either type of list?',['<item>','<li>','<ul>','<h6>'],1,'li means list item.'],
 ['Which is the best heading order for a page section?',['h1, then h3, then h2','h2, then h1, then h6','h1, then h2, then h3','h6, then h5, then h1'],2,'Heading levels should follow a logical hierarchy without skipping levels.'],
 ['What is the usual purpose of an h2 heading?',['The main page title','A major section under the main title','A list item','The browser-tab title'],1,'h2 commonly labels a major section beneath the h1 page title.']
-];let qOrder=[],qPos=0,qCorrect=0,qMissed=[];function startQuestions(){qOrder=shuffle(questions.map((_,i)=>i));qPos=0;qCorrect=0;qMissed=[];$('nextIdentify').onclick=nextQuestion;showQuestion()}function showQuestion(){const q=questions[qOrder[qPos]],card=$('identifyCard');card.innerHTML='';const h=document.createElement('h3');h.textContent=q[0];const choices=document.createElement('div');choices.className='choices';card.append(h,choices);q[1].forEach((answer,i)=>{const b=document.createElement('button');b.className='choice';b.textContent=answer;b.onclick=()=>{[...choices.children].forEach(x=>x.disabled=true);b.classList.add(i===q[2]?'correct':'wrong');if(i===q[2]){qCorrect++;showFeedback($('identifyFeedback'),true,`Correct! ${q[3]} +5 points`);award('identify',5,95)}else{qMissed.push({question:q[0],selected:answer,correct:q[1][q[2]],explanation:q[3]});choices.children[q[2]].classList.add('correct');showFeedback($('identifyFeedback'),false,`Not quite. ${q[3]}`)}$('nextIdentify').textContent=qPos===qOrder.length-1?'Check Your Answers':'Next Question';$('nextIdentify').classList.remove('hidden')};choices.append(b)});$('identifyFeedback').className='feedback';$('nextIdentify').classList.add('hidden');$('identifyProgress').style.width=`${qPos/qOrder.length*100}%`}function nextQuestion(){if(qPos===qOrder.length-1){finishQuestions();return}qPos++;showQuestion()}function finishQuestions(){const card=$('identifyCard');card.innerHTML='';const h=document.createElement('h3');h.textContent='Identify Activity Complete!';const p=document.createElement('p');p.textContent=`You answered ${qCorrect} of ${qOrder.length} questions correctly.`;card.append(h,p);if(qMissed.length){const reviewButton=document.createElement('button');reviewButton.className='action secondary';reviewButton.textContent=`Review ${qMissed.length} Incorrect Answer${qMissed.length===1?'':'s'}`;const list=document.createElement('div');list.className='review-list hidden';qMissed.forEach((m,i)=>{const item=document.createElement('div');item.className='review-item';const qh=document.createElement('h4');qh.textContent=`${i+1}. ${m.question}`;const yours=document.createElement('p');yours.textContent=`Your answer: ${m.selected}`;const correct=document.createElement('p');correct.textContent=`Correct answer: ${m.correct}`;const why=document.createElement('p');why.textContent=`Why: ${m.explanation}`;item.append(qh,yours,correct,why);list.append(item)});reviewButton.onclick=()=>{const opening=list.classList.contains('hidden');list.classList.toggle('hidden');reviewButton.textContent=opening?'Hide Incorrect Answers':`Review ${qMissed.length} Incorrect Answer${qMissed.length===1?'':'s'}`};card.append(reviewButton,list)}else{const perfect=document.createElement('div');perfect.className='review-perfect';perfect.textContent='Excellent! You answered every question correctly.';card.append(perfect)}const r=document.createElement('p');r.textContent='Remember: h1 is highest, h6 is lowest, ul is unordered, ol is ordered, li creates each item, &amp; displays &, &lt; and &gt; display angle brackets, br creates a line break, hr creates a divider, and visible content belongs inside the body.';card.append(r);$('identifyProgress').style.width='100%';$('identifyFeedback').className='feedback';$('nextIdentify').textContent='Next Activity: Build Lists →';$('nextIdentify').onclick=()=>openPanel('lists');$('nextIdentify').classList.remove('hidden')}startQuestions();
+];let qOrder=[],qPos=0,qCorrect=0,qMissed=[];function startQuestions(){qOrder=shuffle(questions.map((_,i)=>i));qPos=0;qCorrect=0;qMissed=[];$('nextIdentify').onclick=nextQuestion;showQuestion()}function showQuestion(){
+  const q=questions[qOrder[qPos]],card=$('identifyCard');
+  card.innerHTML='';
+  let attempts=0;
+  const h=document.createElement('h3');
+  h.textContent=q[0];
+  const choices=document.createElement('div');
+  choices.className='choices';
+  card.append(h,choices);
+  q[1].forEach((answer,i)=>{
+    const b=document.createElement('button');
+    b.className='choice';
+    b.textContent=answer;
+    b.onclick=()=>{
+      attempts++;
+      if(i===q[2]){
+        [...choices.children].forEach(x=>x.disabled=true);
+        b.classList.add('correct');
+        qCorrect++;
+        showFeedback($('identifyFeedback'),true,`Correct! ${q[3]} +5 points`);
+        award('identify',5,95);
+        $('nextIdentify').textContent=qPos===qOrder.length-1?'Check Your Answers':'Next Question';
+        $('nextIdentify').classList.remove('hidden');
+        return;
+      }
+      b.classList.add('wrong');
+      b.disabled=true;
+      if(attempts<2){
+        showFeedback($('identifyFeedback'),false,'Not quite. Try again—you have one more chance.');
+        return;
+      }
+      [...choices.children].forEach(x=>x.disabled=true);
+      choices.children[q[2]].classList.add('correct');
+      qMissed.push({question:q[0],selected:answer,correct:q[1][q[2]],explanation:q[3]});
+      showFeedback($('identifyFeedback'),false,`The correct answer is shown in green. ${q[3]}`);
+      $('nextIdentify').textContent=qPos===qOrder.length-1?'Check Your Answers':'Next Question';
+      $('nextIdentify').classList.remove('hidden');
+    };
+    choices.append(b);
+  });
+  $('identifyFeedback').className='feedback';
+  $('nextIdentify').classList.add('hidden');
+  $('identifyProgress').style.width=`${qPos/qOrder.length*100}%`;
+}function nextQuestion(){if(qPos===qOrder.length-1){finishQuestions();return}qPos++;showQuestion()}function finishQuestions(){const card=$('identifyCard');card.innerHTML='';const h=document.createElement('h3');h.textContent='Identify Activity Complete!';const p=document.createElement('p');p.textContent=`You answered ${qCorrect} of ${qOrder.length} questions correctly.`;card.append(h,p);if(qMissed.length){const reviewButton=document.createElement('button');reviewButton.className='action secondary';reviewButton.textContent=`Review ${qMissed.length} Incorrect Answer${qMissed.length===1?'':'s'}`;const list=document.createElement('div');list.className='review-list hidden';qMissed.forEach((m,i)=>{const item=document.createElement('div');item.className='review-item';const qh=document.createElement('h4');qh.textContent=`${i+1}. ${m.question}`;const yours=document.createElement('p');yours.textContent=`Your answer: ${m.selected}`;const correct=document.createElement('p');correct.textContent=`Correct answer: ${m.correct}`;const why=document.createElement('p');why.textContent=`Why: ${m.explanation}`;item.append(qh,yours,correct,why);list.append(item)});reviewButton.onclick=()=>{const opening=list.classList.contains('hidden');list.classList.toggle('hidden');reviewButton.textContent=opening?'Hide Incorrect Answers':`Review ${qMissed.length} Incorrect Answer${qMissed.length===1?'':'s'}`};card.append(reviewButton,list)}else{const perfect=document.createElement('div');perfect.className='review-perfect';perfect.textContent='Excellent! You answered every question correctly.';card.append(perfect)}const r=document.createElement('p');r.textContent='Remember: h1 is highest, h6 is lowest, ul is unordered, ol is ordered, li creates each item, &amp; displays &, &lt; and &gt; display angle brackets, br creates a line break, hr creates a divider, and visible content belongs inside the body.';card.append(r);$('identifyProgress').style.width='100%';$('identifyFeedback').className='feedback';$('nextIdentify').textContent='Next Activity: Build Lists →';$('nextIdentify').onclick=()=>openPanel('lists');$('nextIdentify').classList.remove('hidden')}startQuestions();
 
 const listRounds=[{name:'unordered grocery list',code:['<ul>','<li>Apples</li>','<li>Bread</li>','</ul>']},{name:'ordered morning routine',code:['<ol>','<li>Wake up</li>','<li>Get ready</li>','</ol>']}];let listRound=0,getList;function startList(){const r=listRounds[listRound];const orderNote=listRound===0?' Apples must be the first list item, and Bread must be the second list item.':'';$('listDirections').textContent=`Build the ${r.name}. Put the opening list tag first, the list items in the middle, and the matching closing tag last.${orderNote} Drag placed lines up or down to reorder them. Click any placed line to send it back to the answer bank.`;getList=makeDragBoard($('listSlots'),$('listBank'),r.code,['Line 1','Line 2','Line 3','Line 4']);$('listFeedback').className='feedback';$('nextListRound').classList.add('hidden');$('toDebug').classList.add('hidden')}startList();$('resetList').onclick=startList;$('checkList').onclick=()=>{const r=listRounds[listRound],a=getList(),n=a.filter((x,i)=>x===r.code[i]).length;if(n===4){showFeedback($('listFeedback'),true,`Correct! You built an ${listRound===0?'unordered':'ordered'} list. +15 points`);award(`list${listRound}`,15,15);if(listRound===0)$('nextListRound').classList.remove('hidden');else $('toDebug').classList.remove('hidden')}else showFeedback($('listFeedback'),false,`${n} of 4 lines are correct. Check the opening tag, item order, each li element, and the closing tag. Click a placed line to return it to the bank, or drag it to another line to reorder.`)};$('nextListRound').onclick=()=>{listRound=1;startList()};$('toDebug').onclick=()=>openPanel('debug');
 
@@ -159,9 +202,9 @@ function sendResults(){const first=$('firstName').value.trim(),last=$('lastName'
     try{if(typeof scores!=="undefined")state.scores={...scores}}catch(e){}
     try{if(typeof activityScores!=="undefined")state.activityScores={...activityScores}}catch(e){}
     try{if(typeof S!=="undefined")state.S={...S}}catch(e){}
-    const numberNames=["reviewIndex","identifyPos","identifyCorrect","debugPos","bugPos","qi","targetIndex"];
+    const numberNames=["reviewIndex","identifyPos","identifyCorrect","debugPos","bugPos","qi","targetIndex","qPos","qCorrect"];
     numberNames.forEach(name=>{try{const value=eval(name);if(typeof value==="number")state.numbers[name]=value}catch(e){}});
-    const arrayNames=["reviewAnswers","targetAnswers","qa","pa","da","identifyOrder","debugOrder","bugOrder"];
+    const arrayNames=["reviewAnswers","targetAnswers","qa","pa","da","identifyOrder","debugOrder","bugOrder","qOrder","qMissed"];
     arrayNames.forEach(name=>{try{const value=eval(name);if(Array.isArray(value))state.arrays[name]=[...value]}catch(e){}});
     const objectNames=["debugAnswers","missedMap","miss"];
     objectNames.forEach(name=>{try{const value=eval(name);if(value&&typeof value==="object"&&!Array.isArray(value))state.objects[name]={...value}}catch(e){}});
@@ -191,7 +234,7 @@ function sendResults(){const first=$('firstName').value.trim(),last=$('lastName'
         if(typeof renderReview==="function")renderReview();
         else if(typeof rq==="function")rq();
       }else if(state.activePanel==="target"&&typeof renderTarget==="function")renderTarget();
-      else if(state.activePanel==="identify"&&typeof showIdentify==="function")showIdentify();
+      else if(state.activePanel==="identify"){if(typeof showIdentify==="function")showIdentify();else if(typeof showQuestion==="function")showQuestion();}
       else if(state.activePanel==="debug"){
         if(typeof showBug==="function")showBug();
         else if(typeof showDebug==="function")showDebug();
