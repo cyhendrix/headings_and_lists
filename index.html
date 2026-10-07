@@ -116,12 +116,35 @@ const questions=[
 const listRounds=[{name:'unordered grocery list',code:['<ul>','<li>Apples</li>','<li>Bread</li>','</ul>']},{name:'ordered morning routine',code:['<ol>','<li>Wake up</li>','<li>Get ready</li>','</ol>']}];let listRound=0,getList;function startList(){const r=listRounds[listRound];const orderNote=listRound===0?' Apples must be the first list item, and Bread must be the second list item.':'';$('listDirections').textContent=`Build the ${r.name}. Put the opening list tag first, the list items in the middle, and the matching closing tag last.${orderNote} Drag placed lines up or down to reorder them. Click any placed line to send it back to the answer bank.`;getList=makeDragBoard($('listSlots'),$('listBank'),r.code,['Line 1','Line 2','Line 3','Line 4']);$('listFeedback').className='feedback';$('nextListRound').classList.add('hidden');$('toDebug').classList.add('hidden')}startList();$('resetList').onclick=startList;$('checkList').onclick=()=>{const r=listRounds[listRound],a=getList(),n=a.filter((x,i)=>x===r.code[i]).length;if(n===4){showFeedback($('listFeedback'),true,`Correct! You built an ${listRound===0?'unordered':'ordered'} list. +15 points`);award(`list${listRound}`,15,15);if(listRound===0)$('nextListRound').classList.remove('hidden');else $('toDebug').classList.remove('hidden')}else showFeedback($('listFeedback'),false,`${n} of 4 lines are correct. Check the opening tag, item order, each li element, and the closing tag. Click a placed line to return it to the bank, or drag it to another line to reorder.`)};$('nextListRound').onclick=()=>{listRound=1;startList()};$('toDebug').onclick=()=>openPanel('debug');
 
 const bugs=[
-['<h1>My Page<h1>','<h1>My Page</h1>','Add the slash to the closing h1 tag.'],
-['<h3>Favorite Games</h2>','<h3>Favorite Games</h3>','The opening and closing heading levels must match.'],
-['<ul><li>Apples<li>Bread</ul>','<ul><li>Apples</li><li>Bread</li></ul>','Close each li element and close the ul.'],
-['<ol><li>First</li><li>Second</li>','<ol><li>First</li><li>Second</li></ol>','Add the missing closing ol tag.'],
-['<h1>Title</h1><body><p>Text</p></body>','<body><h1>Title</h1><p>Text</p></body>','Move the visible h1 content inside the body tags.'],
-['<ul><h3>Supplies</h3><li>Pencil</li></ul>','<h3>Supplies</h3><ul><li>Pencil</li></ul>','The heading labels the list but should not be a child list item inside ul.']
+[`<h1>My Page<h1>`,`<h1>My Page</h1>`,'Add the slash to the closing h1 tag.'],
+[`<h3>Favorite Games</h2>`,`<h3>Favorite Games</h3>`,'The opening and closing heading levels must match.'],
+[`<ul>
+  <li>Apples
+  <li>Bread
+</ul>`,`<ul>
+  <li>Apples</li>
+  <li>Bread</li>
+</ul>`,'Close each li element and close the ul.'],
+[`<ol>
+  <li>First</li>
+  <li>Second</li>`,`<ol>
+  <li>First</li>
+  <li>Second</li>
+</ol>`,'Add the missing closing ol tag.'],
+[`<h1>Title</h1>
+<body>
+  <p>Text</p>
+</body>`,`<body>
+  <h1>Title</h1>
+  <p>Text</p>
+</body>`,'Move the visible h1 content inside the body tags.'],
+[`<ul>
+  <h3>Supplies</h3>
+  <li>Pencil</li>
+</ul>`,`<h3>Supplies</h3>
+<ul>
+  <li>Pencil</li>
+</ul>`,'The heading labels the list but should not be a child list item inside ul.']
 ];let bugOrder=[],bugPos=0,currentBugIndex=0;function norm(s){return s.trim().toLowerCase().replace(/\s+/g,' ').replace(/>\s+</g,'><')}function startDebug(){bugOrder=shuffle(bugs.map((_,i)=>i));bugPos=0;$('repair').classList.remove('hidden');$('nextDebug').onclick=nextBug;showBug()}function showBug(){currentBugIndex=bugOrder[bugPos];const b=bugs[currentBugIndex];$('brokenCode').textContent=b[0];$('repair').value='';$('debugFeedback').className='feedback';$('checkDebug').classList.remove('hidden');$('nextDebug').classList.add('hidden');$('debugProgress').style.width=`${bugPos/bugOrder.length*100}%`} $('checkDebug').onclick=()=>{const b=bugs[currentBugIndex];if(norm($('repair').value)===norm(b[1])){showFeedback($('debugFeedback'),true,`Correct! ${b[2]} +10 points`);award('debug',10,60);$('checkDebug').classList.add('hidden');$('nextDebug').textContent=bugPos===bugOrder.length-1?'View Results':'Next Bug';$('nextDebug').classList.remove('hidden')}else showFeedback($('debugFeedback'),false,`Keep debugging. Hint: ${b[2]}`)};function nextBug(){if(bugPos===bugOrder.length-1){$('brokenCode').textContent='Debug Activity Complete!';$('repair').classList.add('hidden');showFeedback($('debugFeedback'),true,`You corrected all ${bugOrder.length} bugs.`);$('debugProgress').style.width='100%';$('nextDebug').textContent='Next Activity: Create →';$('nextDebug').onclick=()=>openPanel('create');return}bugPos++;showBug()}startDebug();
 
 const starter=`<!DOCTYPE html>\n<html>\n<head>\n  <title>My Page</title>\n</head>\n<body>\n  \n</body>\n</html>`;function resetCreate(){$('codeInput').value=starter;$('preview').srcdoc='';$('createFeedback').className='feedback';$('finish').classList.add('hidden')} $('resetCode').onclick=resetCreate;$('testCode').onclick=()=>{const code=$('codeInput').value;const body=code.match(/<body[^>]*>([\s\S]*?)<\/body>/i);const heading=body&&/<h[1-6][^>]*>[^<]+<\/h[1-6]>/i.test(body[1]);const list=body&&/<(ul|ol)[^>]*>[\s\S]*?<\/\1>/i.test(body[1]);const items=body?(body[1].match(/<li[^>]*>[^<]+<\/li>/gi)||[]).length:0;const needs=[];if(!body)needs.push('matching body tags');if(!heading)needs.push('a complete h1–h6 heading inside the body');if(!list)needs.push('a complete ul or ol list inside the body');if(items<2)needs.push('at least two complete li items');if(needs.length){showFeedback($('createFeedback'),false,`Keep coding. Add or correct: ${needs.join(', ')}.`);return}$('preview').srcdoc=code;showFeedback($('createFeedback'),true,'Your page includes body tags, a heading, a complete list, and at least two list items. +25 points');award('create',25,25);$('finish').classList.remove('hidden')};function resultData(){const earned=totalScore(),grade=Math.round(earned/MAX_POINTS*100);return{earned,grade,label:`${earned} points out of ${MAX_POINTS} — Grade: ${grade}%`}}$('finish').onclick=()=>{showFeedback($('createFeedback'),true,'Practice complete! You used heading hierarchy, built ordered and unordered lists, placed content inside the body, debugged errors, and created your own page.');$('finalResult').innerHTML=`<strong>${resultData().label}</strong>`;$('resultSubmit').classList.remove('hidden');$('resultSubmit').scrollIntoView({behavior:'smooth',block:'center'});$('finish').textContent='Start Again ↻';$('finish').onclick=()=>{resetAllScores();resetHierarchy();startQuestions();listRound=0;startList();startDebug();resetCreate();$('finish').textContent='Finish Practice ✓';$('resultSubmit').classList.add('hidden');$('submitResults').disabled=false;$('submitFeedback').className='feedback';openPanel('hierarchy')}};
